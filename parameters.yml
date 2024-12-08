@@ -1,0 +1,36 @@
+trigger:
+  - main
+
+pool:
+  name: devenvironment  # Specify the agent pool
+  demands:
+    - agent.name -equals devagent  # Specify the agent name
+
+parameters:
+  - name: goal
+    type: string
+    default: package
+    values:
+      - compile
+      - package
+      - install
+
+stages:
+  - stage: build
+    displayName: Build Stage
+    jobs:
+      - job: build
+        displayName: Build Job
+        steps:
+          - task: Maven@4
+            inputs:
+              mavenPOMFile: 'pom.xml'
+              goals: ${{ parameters.goal }}
+          - task: CopyFiles@2
+            inputs:
+              contents: 'target/*.jar'
+              targetFolder: '$(Build.ArtifactStagingDirectory)'
+          - task: PublishBuildArtifacts@1
+            inputs:
+              pathToPublish: '$(Build.ArtifactStagingDirectory)'
+              artifactName: dev-artifact
